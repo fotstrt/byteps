@@ -49,6 +49,7 @@ void byteps_lazy_init() {
     if (BytePSGlobal::IsRootDevice()) {
       func.push_back(PullLoop);
       func.push_back(DecompressLoop);
+      func.push_back(StoreLoop);
     }
   }
 
@@ -267,6 +268,7 @@ Status EnqueueTensor(BPSContext &context, std::shared_ptr<Tensor> input,
                    << " rank=" << BytePSGlobal::GetLocalRank();
 
     BytePSGlobal::GetScheduledQueue(e->queue_list[0])->addTask(task);
+    std::cout << "First queue: " << e->queue_list[0] << std::endl;
     accumulated += task->len;
   }
 
@@ -482,6 +484,14 @@ std::shared_ptr<std::vector<QueueType>> GetPullQueueList(int device) {
     queue_list->push_back(BROADCAST);
   }
   return queue_list;
+}
+
+std::shared_ptr<std::vector<QueueType>> GetStoreQueueList(int device) {
+
+    auto queue_list = std::make_shared<std::vector<QueueType>>();
+    queue_list->push_back(STORE);
+    return queue_list;
+
 }
 
 }  // namespace common

@@ -617,6 +617,32 @@ bool RunPullLoopOnce() {
   return true;
 }
 
+bool RunStoreLoopOnce() {
+
+  QueueType this_op = STORE;
+  auto q = BytePSGlobal::GetScheduledQueue(this_op);
+  auto task = q->getTask();
+  if (task) {
+     // spawn
+      BytePSGlobal::GetThreadPool()->enqueue([task]() {
+      char *data = const_cast<char *>(static_cast<const char *>(task->cpubuff) +
+                                      task->offset);
+      auto &pskv = BytePSGlobal::EncodeDefaultKey(task->key, 0);
+      auto len = pskv.lens[0];
+      int dtype = task->tensor->dtype();
+      
+      cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << endl;
+      BPS_LOG(DEBUG) << "PULL with gradient compression. key=" << task->key;
+
+      FinishOrProceed(task);
+    });
+  } else {
+    std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
+  }
+  return true;
+
+}
+
 bool RunDecompressLoopOnce() {
   QueueType this_op = DECOMPRESS;
   auto q = BytePSGlobal::GetScheduledQueue(this_op);
@@ -822,6 +848,12 @@ void PushLoop() {
 
 void PullLoop() {
   while (RunPullLoopOnce() && !BytePSGlobal::ShouldShutdown()) {
+  }
+  BytePSGlobal::ReportThreadFinish();
+}
+
+void StoreLoop() {
+  while (RunStoreLoopOnce() && !BytePSGlobal::ShouldShutdown()) {
   }
   BytePSGlobal::ReportThreadFinish();
 }

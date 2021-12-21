@@ -69,8 +69,13 @@ void StartTask(::torch::Tensor tensor, ::torch::Tensor output, int average,
 
   auto queue_list = common::GetPushQueueList(device);
   auto queue_list_pull = common::GetPullQueueList(device);
+  auto queue_list_store = common::GetStoreQueueList(device);
+
   queue_list->insert(queue_list->end(), queue_list_pull->begin(),
                      queue_list_pull->end());
+
+  queue_list->insert(queue_list->end(), queue_list_store->begin(),
+                     queue_list_store->end());                   
 
   auto enqueue_result = common::EnqueueTensor(
       context, byteps_input, byteps_output, ready_event, device, priority,

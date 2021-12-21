@@ -97,6 +97,11 @@ void FinishOrProceed(std::shared_ptr<TensorTableEntry> task) {
     BPS_LOG(TRACE) << "Rank=" << BytePSGlobal::GetRank() << " finishes "
                    << LogStrings[this_op] << ", tensor: " << task->tensor_name
                    << ", key=" << task->key << "; Passing to the next queue.";
+    std::cout << "Rank=" << BytePSGlobal::GetRank() << " finishes "
+	                        << LogStrings[this_op] << ", tensor: " << task->tensor_name
+				                   << ", key=" << task->key << "; Passing to the next queue with number " << queue_list[0] << std::endl;
+
+    
     BytePSGlobal::GetScheduledQueue(queue_list[0])->addTask(task);
   } else {
     // this is the last QueueType of this current sub-task.
@@ -619,6 +624,7 @@ bool RunPullLoopOnce() {
 
 bool RunStoreLoopOnce() {
 
+  std::cout << "Inside RunStoreLoopOnce" << std::endl;
   QueueType this_op = STORE;
   auto q = BytePSGlobal::GetScheduledQueue(this_op);
   auto task = q->getTask();
@@ -631,7 +637,7 @@ bool RunStoreLoopOnce() {
       auto len = pskv.lens[0];
       int dtype = task->tensor->dtype();
       
-      cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << endl;
+      std::cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << std::endl;
       BPS_LOG(DEBUG) << "PULL with gradient compression. key=" << task->key;
 
       FinishOrProceed(task);

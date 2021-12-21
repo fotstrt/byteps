@@ -74,9 +74,14 @@ void StartTask(::torch::Tensor tensor, ::torch::Tensor output, int average,
   queue_list->insert(queue_list->end(), queue_list_pull->begin(),
                      queue_list_pull->end());
 
-  queue_list->insert(queue_list->end(), queue_list_store->begin(),
-                     queue_list_store->end());                   
 
+  std::cout << "insert at queue list " << std::endl;
+  //queue_list->insert(queue_list->end(), queue_list_store->begin(),
+  //                   queue_list_store->end());                   
+
+  //for (int i=0; i<queue_list.size(); i++)
+  // 	  std::cout << queue_list[i] << "," ;
+  std::cout << "Done!" << std::endl;
   auto enqueue_result = common::EnqueueTensor(
       context, byteps_input, byteps_output, ready_event, device, priority,
       version,

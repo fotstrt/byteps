@@ -43,6 +43,8 @@ void PullLoop();
 
 void DecompressLoop();
 
+void StoreLoop();
+
 void RootCopyHost2DeviceLoop();
 
 void NonRootCopyListenLoop();

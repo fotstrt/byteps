@@ -624,23 +624,35 @@ bool RunPullLoopOnce() {
 
 bool RunStoreLoopOnce() {
 
-  std::cout << "Inside RunStoreLoopOnce" << std::endl;
+  //std::cout << "Inside RunStoreLoopOnce" << std::endl;
   QueueType this_op = STORE;
   auto q = BytePSGlobal::GetScheduledQueue(this_op);
   auto task = q->getTask();
   if (task) {
      // spawn
-      BytePSGlobal::GetThreadPool()->enqueue([task]() {
-      char *data = const_cast<char *>(static_cast<const char *>(task->cpubuff) +
-                                      task->offset);
-      auto &pskv = BytePSGlobal::EncodeDefaultKey(task->key, 0);
-      auto len = pskv.lens[0];
-      int dtype = task->tensor->dtype();
-      
-      std::cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << std::endl;
-      BPS_LOG(DEBUG) << "PULL with gradient compression. key=" << task->key;
+      BPS_CHECK(BytePSGlobal::IsRootDevice())
+	               << "only root device should enter STORE loop";
 
-      FinishOrProceed(task);
+      std::cout << "New task for storing found!" << std::endl;
+        BytePSGlobal::GetThreadPool()->enqueue([task]() {
+
+	std::cout << "zero" << std::endl;
+
+        char *data = const_cast<char *>(static_cast<const char *>(task->cpubuff) +
+                                      task->offset);
+
+        std::cout << "one" << std::endl;
+        auto &pskv = BytePSGlobal::EncodeDefaultKey(task->key, 0);
+
+        std::cout << "two" << std::endl;
+        auto len = pskv.lens[0];
+
+        std::cout << "three" << std::endl;
+        int dtype = task->tensor->dtype();
+      
+        std::cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << std::endl;
+
+        FinishOrProceed(task);
     });
   } else {
     std::this_thread::sleep_for(std::chrono::nanoseconds(1000));

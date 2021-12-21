@@ -202,6 +202,15 @@ Status EnqueueTensor(BPSContext &context, std::shared_ptr<Tensor> input,
     it = queue_list->insert(it, COMPRESS);  // before PUSH
     it = std::find(queue_list->begin(), queue_list->end(), PULL);
     queue_list->insert(it + 1, DECOMPRESS);  // after PULL
+    std::cout << "PUSH STORE AFTER COMPRESS!!!!!!!!" << std::endl;
+    queue_list->insert(it + 2, STORE);  // after PULL
+
+  }
+
+  else if (BytePSGlobal::IsRootDevice() && context.compressor_list.empty()) {
+    std::cout << "PUSH STORE!!!!!!!!" << std::endl;
+    auto it = std::find(queue_list->begin(), queue_list->end(), PULL);
+    queue_list->insert(it + 1, STORE);  // after PULL
   }
 
   std::shared_ptr<TensorTableEntry> e(new TensorTableEntry);
@@ -489,7 +498,14 @@ std::shared_ptr<std::vector<QueueType>> GetPullQueueList(int device) {
 std::shared_ptr<std::vector<QueueType>> GetStoreQueueList(int device) {
 
     auto queue_list = std::make_shared<std::vector<QueueType>>();
-    queue_list->push_back(STORE);
+
+    if (BytePSGlobal::IsDistributed()) {
+	 if (BytePSGlobal::IsRootDevice()) {
+		 queue_list->push_back(STORE);
+	 }
+    }
+
+    
     return queue_list;
 
 }

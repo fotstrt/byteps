@@ -202,13 +202,13 @@ Status EnqueueTensor(BPSContext &context, std::shared_ptr<Tensor> input,
     it = queue_list->insert(it, COMPRESS);  // before PUSH
     it = std::find(queue_list->begin(), queue_list->end(), PULL);
     queue_list->insert(it + 1, DECOMPRESS);  // after PULL
-    std::cout << "PUSH STORE AFTER COMPRESS!!!!!!!!" << std::endl;
+    //std::cout << "PUSH STORE AFTER COMPRESS!!!!!!!!" << std::endl;
     queue_list->insert(it + 2, STORE);  // after PULL
 
   }
 
   else if (BytePSGlobal::IsRootDevice() && context.compressor_list.empty()) {
-    std::cout << "PUSH STORE!!!!!!!!" << std::endl;
+    //std::cout << "PUSH STORE!!!!!!!!" << std::endl;
     auto it = std::find(queue_list->begin(), queue_list->end(), PULL);
     queue_list->insert(it + 1, STORE);  // after PULL
   }
@@ -277,7 +277,7 @@ Status EnqueueTensor(BPSContext &context, std::shared_ptr<Tensor> input,
                    << " rank=" << BytePSGlobal::GetLocalRank();
 
     BytePSGlobal::GetScheduledQueue(e->queue_list[0])->addTask(task);
-    std::cout << "First queue: " << e->queue_list[0] << std::endl;
+    //std::cout << "First queue: " << e->queue_list[0] << std::endl;
     accumulated += task->len;
   }
 

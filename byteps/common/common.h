@@ -116,7 +116,8 @@ const std::vector<std::string> LogStrings = {"COORDINATE_REDUCE",
                                              "DECOMPRESS",
                                              "COPYH2D",
                                              "COORDINATE_BROADCAST",
-                                             "BROADCAST"};
+                                             "BROADCAST",
+                                             "STORE"};
 
 class Status {
  public:

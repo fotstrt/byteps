@@ -24,11 +24,16 @@
 #include "core_loops.h"
 #include "global.h"
 #include "logging.h"
+#include <iostream>
+#include <string>
+#include <fstream>
 
 namespace byteps {
 namespace common {
 
 void FinishOrProceed(std::shared_ptr<TensorTableEntry> task) {
+
+  //std::cout << "Inside FinishOrProceed" << std::endl;
   auto &queue_list = task->queue_list;
   BPS_CHECK_GE(queue_list.size(), 1);
   auto this_op = queue_list[0];
@@ -97,13 +102,15 @@ void FinishOrProceed(std::shared_ptr<TensorTableEntry> task) {
     BPS_LOG(TRACE) << "Rank=" << BytePSGlobal::GetRank() << " finishes "
                    << LogStrings[this_op] << ", tensor: " << task->tensor_name
                    << ", key=" << task->key << "; Passing to the next queue.";
-    std::cout << "Rank=" << BytePSGlobal::GetRank() << " finishes "
-	                        << LogStrings[this_op] << ", tensor: " << task->tensor_name
-				                   << ", key=" << task->key << "; Passing to the next queue with number " << queue_list[0] << std::endl;
+    //std::cout << "Rank=" << BytePSGlobal::GetRank() << " finishes "
+    //	                        << LogStrings[this_op] << ", tensor: " << task->tensor_name
+    //				                   << ", key=" << task->key << "; Passing to the next queue with number " << queue_list[0] << std::endl;
 
     
     BytePSGlobal::GetScheduledQueue(queue_list[0])->addTask(task);
   } else {
+    //std::cout << "****** Last operation for this sub-tensor!!!" << std::endl;
+
     // this is the last QueueType of this current sub-task.
     BPS_CHECK(task->counter_ptr) << task->tensor_name << " counter_ptr is null";
     int v = task->counter_ptr.get()->fetch_add(1);
@@ -602,6 +609,8 @@ bool RunPullLoopOnce() {
     data =
         const_cast<char *>(static_cast<const char *>(task->cpubuff) + offset);
 
+
+    //std::cout << data << std::endl;
     // get metadata
     const int dtype = task->output->dtype();
 
@@ -632,28 +641,34 @@ bool RunStoreLoopOnce() {
      // spawn
       BPS_CHECK(BytePSGlobal::IsRootDevice())
 	               << "only root device should enter STORE loop";
+        ///BytePSGlobal::GetThreadPool()->enqueue([task]() {
 
-      std::cout << "New task for storing found!" << std::endl;
-        BytePSGlobal::GetThreadPool()->enqueue([task]() {
-
-	std::cout << "zero" << std::endl;
-
+	BPS_CHECK(task->cpubuff);
         char *data = const_cast<char *>(static_cast<const char *>(task->cpubuff) +
                                       task->offset);
 
-        std::cout << "one" << std::endl;
+	//std::cout << data << std::endl;
         auto &pskv = BytePSGlobal::EncodeDefaultKey(task->key, 0);
 
-        std::cout << "two" << std::endl;
         auto len = pskv.lens[0];
 
-        std::cout << "three" << std::endl;
         int dtype = task->tensor->dtype();
       
+	std::ofstream stream;
+	std::string ks = std::to_string(task->key);
+
+	stream.open("files/tensor_"+ks);
+	if( !stream )
+		std::cout << "Opening file failed" << std::endl;
+	
+	stream << data << std::endl;
+	if( !stream )
+		std::cout << "Write failed" << std::endl;
+
         std::cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << std::endl;
 
         FinishOrProceed(task);
-    });
+    //});
   } else {
     std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
   }

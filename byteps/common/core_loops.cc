@@ -27,6 +27,10 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <unistd.h> 
+#include <chrono>
+#include <fcntl.h> 
+
 
 namespace byteps {
 namespace common {
@@ -654,18 +658,48 @@ bool RunStoreLoopOnce() {
 
         int dtype = task->tensor->dtype();
       
+	auto begin = std::chrono::high_resolution_clock::now();
+
 	std::ofstream stream;
 	std::string ks = std::to_string(task->key);
 
+	/*
+	std::string all_data = std::string(data, len);
+	
 	stream.open("files/tensor_"+ks);
 	if( !stream )
 		std::cout << "Opening file failed" << std::endl;
-	
-	stream << data << std::endl;
+
+	stream << std::to_string(task->key) << std::endl;
+	stream << std::to_string(task->offset) << std::endl;	
+	stream << all_data << std::endl;
 	if( !stream )
 		std::cout << "Write failed" << std::endl;
+        */
 
-        std::cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << std::endl;
+	
+	std::string s = "files/tensor_" + ks;
+	char fname[s.size()+1];
+
+	strcpy(fname, s.c_str());
+
+	int afp = open((char*)fname,  O_CREAT | O_RDWR | O_TRUNC, 0600 ); // O_DIRECT 
+	if (afp == -1)
+		std::cout << "Opening file failed" << std::endl;
+
+	int ret = write(afp, data , len);
+	if (ret == -1)
+		std::cout << "writing failed!" << std::endl;
+	
+	ret = fsync(afp);
+	if (ret==-1)
+	    std::cout << "flushing failed!" << std::endl;
+	close(afp);
+
+	auto end = std::chrono::high_resolution_clock::now();
+	//std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << "ms" << std::endl;
+
+        std::cout << "Store tensor with key=" << task->key << " len is: " << len << " dtype is " << dtype << " offset is: " << task->offset << " and tensor name is " << task->tensor_name << std::endl;
 
         FinishOrProceed(task);
     //});
